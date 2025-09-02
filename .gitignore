@@ -1,0 +1,7 @@
+/target
+# Secrets & runtime
+/config.yaml
+/config/*.yaml
+/target/
+/.env
+**/*.log

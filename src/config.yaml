@@ -1,0 +1,38 @@
+listeners:
+  - operator: "Entel"
+    port: 2788
+  - operator: "Movistar"
+    port: 2786
+  - operator: "Claro"
+    port: 2785
+  - operator: "Bitel"
+    port: 2787
+
+operators:
+  - name: "Entel"
+    listen_port: 2788     # Puerto LOCAL donde escucha el interceptor
+    smsc_host: "172.24.3.185"
+    smsc_port: 51301      # Puerto del SMSC remoto
+    system_id: "Entel_Prox_OTP1"
+    password: "Xsw7cde9"
+
+  - name: "Movistar"
+    listen_port: 2786
+    smsc_host: "172.24.3.182"
+    smsc_port: 51203
+    system_id: "Movis_Prox_MKT1"
+    password: "22MoSeT3"
+
+  - name: "Claro"
+    listen_port: 2785
+    smsc_host: "172.24.3.183"
+    smsc_port: 51102
+    system_id: "Claro_Prox_OTP2"
+    password: "Zaq2cde4"
+
+  - name: "Bitel"
+    listen_port: 2787
+    smsc_host: "172.24.3.184"
+    smsc_port: 51003
+    system_id: "Bitel_Prox_MKT1"
+    password: "b9G3LW2z"

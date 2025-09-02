@@ -1,0 +1,13 @@
+[package]
+name = "interceptor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "time"] }
+socket2 = "0.4"
+libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
