@@ -18,6 +18,7 @@ use crate::{
     CMD_ENQUIRE_LINK, CMD_ENQUIRE_LINK_RESP,
     CMD_SUBMIT_SM, CMD_SUBMIT_SM_RESP,
     CMD_UNBIND, CMD_UNBIND_RESP,
+    CMD_DATA_SM,
     ESME_ROK,
     SEQUENCE_COUNTER,
     FRAGMENT_SEQUENCES,
@@ -331,13 +332,13 @@ pub async fn run_rn_router(
                                     let resp = pdu.new_response(CMD_ENQUIRE_LINK_RESP, ESME_ROK, Vec::new());
                                     let _ = tx_client.send(resp).await;
                                 }
-                                CMD_SUBMIT_SM => {
+                                CMD_SUBMIT_SM | CMD_DATA_SM => {
                                     // Extraer destino actual
                                     let dst = match extract_destination_addr(&pdu.body) {
                                         Ok((_s, _e, d)) => d,
                                         Err(_) => {
                                             // ESME_RINVDSTADR
-                                            let resp = pdu.new_response(CMD_SUBMIT_SM_RESP, 0x0000000B, Vec::new());
+                                            let resp = pdu.new_response(pdu.get_response_id(), 0x0000000B, Vec::new());
                                             let _ = tx_client.send(resp).await;
                                             continue;
                                         }
@@ -347,7 +348,7 @@ pub async fn run_rn_router(
                                         Ok(v) => v,
                                         Err(err) => {
                                             eprintln!("[Router] RN parse error for {}: {:?}", dst, err);
-                                            let resp = pdu.new_response(CMD_SUBMIT_SM_RESP, 0x0000000B, Vec::new());
+                                            let resp = pdu.new_response(pdu.get_response_id(), 0x0000000B, Vec::new());
                                             let _ = tx_client.send(resp).await;
                                             continue;
                                         }
@@ -356,7 +357,7 @@ pub async fn run_rn_router(
                                     let mut forward_pdu = pdu.clone();
                                     if let Err(e) = rewrite_destination_addr(&mut forward_pdu.body, &forward_addr) {
                                         eprintln!("[Router] rewrite dest error: {}", e);
-                                        let resp = pdu.new_response(CMD_SUBMIT_SM_RESP, 0x0000000B, Vec::new());
+                                        let resp = pdu.new_response(pdu.get_response_id(), 0x0000000B, Vec::new());
                                         let _ = tx_client.send(resp).await;
                                         continue;
                                     }
@@ -371,12 +372,12 @@ pub async fn run_rn_router(
                                         if tx_smsc.send(forward_pdu).await.is_err() {
                                             eprintln!("[Router] send submit to SMSC {} failed", op_name);
                                             seq_map_conn.lock().unwrap().remove(&new_seq);
-                                            let resp = pdu.new_response(CMD_SUBMIT_SM_RESP, 0x00000008, Vec::new()); // ESME_RSYSERR
+                                            let resp = pdu.new_response(pdu.get_response_id(), 0x00000008, Vec::new()); // ESME_RSYSERR
                                             let _ = tx_client.send(resp).await;
                                         }
                                     } else {
                                         eprintln!("[Router] operator '{}' has no active SMSC tx", op_name);
-                                        let resp = pdu.new_response(CMD_SUBMIT_SM_RESP, 0x00000008, Vec::new());
+                                        let resp = pdu.new_response(pdu.get_response_id(), 0x00000008, Vec::new());
                                         let _ = tx_client.send(resp).await;
                                     }
                                 }
