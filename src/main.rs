@@ -21,6 +21,9 @@ use sms_fragment::{SharedSmsBuffer, process_udh};
 mod multi_buffer;
 use multi_buffer::setup_multi_buffer_system;
 
+mod rn_router;
+use rn_router::RouterConfig;
+
 // ----- SMPP constants -----
 const CMD_BIND_TRANSCEIVER:      u32 = 0x00000009;
 const CMD_BIND_TRANSCEIVER_RESP: u32 = 0x80000009;
@@ -55,6 +58,7 @@ fn register_fragment_sequence(seq: u32) {
 #[derive(Debug, Deserialize, Clone)]
 struct AppConfig {
     operators: Vec<OperatorConfig>,
+    router: Option<RouterConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -784,7 +788,21 @@ async fn handle_connection(
                 });
             });
         }
-    
+
+        if let Some(router_config) = config.router {
+            println!("Starting router on port {}", router_config.listen_port);
+            let ops = config.operators.clone();
+            tokio::spawn(async move {
+                println!("Router task started");
+                if let Err(e) = rn_router::run_rn_router(router_config, ops).await {
+                    eprintln!("[Router] Error: {}", e);
+                }
+                println!("Router task ended");
+            });
+        } else {
+            println!("No router config found");
+        }
+
         // Mantener el programa activo
         loop {
             tokio::time::sleep(Duration::from_secs(3600)).await;

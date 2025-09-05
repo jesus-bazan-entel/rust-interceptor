@@ -7,6 +7,8 @@ listeners:
     port: 2785
   - operator: "Bitel"
     port: 2787
+  - operator: "RN"
+    port: 2790
 
 operators:
   - name: "Entel"
@@ -36,3 +38,16 @@ operators:
     smsc_port: 51003
     system_id: "Bitel_Prox_MKT1"
     password: "b9G3LW2z"
+
+router:
+  name: "Portados"
+  listen_port: 2790
+  system_id: "Fravatel_Porta"
+  password: "1jeANyww"
+  routing_rules:
+    "20": "Claro"
+    "21": "Movistar"
+    "22": "Entel"
+    "24": "Bitel"
+  rn_origin_expected: "61"     # valida RN_origen si procede
+  strip_rn_on_forward: true    # quita el RN al reenviar al SMSC
