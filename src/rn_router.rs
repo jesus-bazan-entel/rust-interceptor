@@ -286,6 +286,7 @@ pub async fn run_rn_router(
         let rn_cfg = rn_cfg.clone();
         let out_tx_map = out_tx.clone();
         let seq_map_conn = seq_map.clone();
+        let router_system_id = router.system_id.clone();
 
         tokio::spawn(async move {
             // Aceptar BIND del cliente y responder localmente
@@ -298,7 +299,10 @@ pub async fn run_rn_router(
                 eprintln!("[Router] First PDU is not BIND_TRX from {}", addr);
                 return;
             }
-            let bind_resp = bind_req.new_response(CMD_BIND_TRANSCEIVER_RESP, ESME_ROK, Vec::new());
+            let mut body = Vec::new();
+            body.extend_from_slice(router_system_id.as_bytes());
+            body.push(0); // Null terminator for C-Octet string
+            let bind_resp = bind_req.new_response(CMD_BIND_TRANSCEIVER_RESP, ESME_ROK, body);
             if let Err(e) = bind_resp.write_to(&mut client).await {
                 eprintln!("[Router] bind_resp write error: {}", e);
                 return;
