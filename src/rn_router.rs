@@ -132,6 +132,26 @@ fn rewrite_destination_addr(body: &mut Vec<u8>, new_dest: &str) -> Result<(), &'
     Ok(())
 }
 
+/// Extrae el interface_version del body de un BIND PDU.
+fn get_interface_version(body: &[u8]) -> Option<u8> {
+    let mut pos = 0;
+    // Skip system_id
+    while pos < body.len() && body[pos] != 0 { pos += 1; }
+    if pos >= body.len() { return None; }
+    pos += 1;
+    // Skip password
+    while pos < body.len() && body[pos] != 0 { pos += 1; }
+    if pos >= body.len() { return None; }
+    pos += 1;
+    // Skip system_type
+    while pos < body.len() && body[pos] != 0 { pos += 1; }
+    if pos >= body.len() { return None; }
+    pos += 1;
+    // Read interface_version
+    if pos >= body.len() { return None; }
+    Some(body[pos])
+}
+
 /// Construye el body de BIND_TRANSCEIVER 3.4 mínimo
 fn build_bind_trx_body(system_id: &str, password: &str) -> Vec<u8> {
     let mut b = Vec::new();
@@ -303,8 +323,13 @@ pub async fn run_rn_router(
             body.extend_from_slice(router_system_id.as_bytes());
             body.push(0); // Null terminator for C-Octet string
 
-            // Add sc_interface_version TLV (Tag: 0x0210, Len: 1, Val: 0x34)
-            body.extend_from_slice(&[0x02, 0x10, 0x00, 0x01, 0x34]);
+            // Conditionally add TLV based on client's interface version
+            if let Some(version) = get_interface_version(&bind_req.body) {
+                if version >= 0x34 {
+                    // Add sc_interface_version TLV (Tag: 0x0210, Len: 1, Val: 0x34)
+                    body.extend_from_slice(&[0x02, 0x10, 0x00, 0x01, 0x34]);
+                }
+            }
 
             let bind_resp = bind_req.new_response(CMD_BIND_TRANSCEIVER_RESP, ESME_ROK, body);
             if let Err(e) = bind_resp.write_to(&mut client).await {
