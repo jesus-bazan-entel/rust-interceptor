@@ -302,6 +302,10 @@ pub async fn run_rn_router(
             let mut body = Vec::new();
             body.extend_from_slice(router_system_id.as_bytes());
             body.push(0); // Null terminator for C-Octet string
+
+            // Add sc_interface_version TLV (Tag: 0x0210, Len: 1, Val: 0x34)
+            body.extend_from_slice(&[0x02, 0x10, 0x00, 0x01, 0x34]);
+
             let bind_resp = bind_req.new_response(CMD_BIND_TRANSCEIVER_RESP, ESME_ROK, body);
             if let Err(e) = bind_resp.write_to(&mut client).await {
                 eprintln!("[Router] bind_resp write error: {}", e);
